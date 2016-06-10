@@ -1,6 +1,6 @@
 # specter-edn
 
-A Clojure library designed to ... well, that part is up to you.
+Specter paths for working with formatted EDN and Cloure code.
 
 ## Usage
 
