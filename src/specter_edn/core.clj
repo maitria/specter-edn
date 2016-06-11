@@ -86,7 +86,7 @@
                [0 1] :new
                [1 1] :match))))))
 
-(defn- seq-node-ctor
+(defn- inner-node-ctor
   [node coll]
   (cond
     (= :forms (n/tag node)) n/forms-node
@@ -101,9 +101,9 @@
                                           (n/tag node)
                                           ")")))))
 
-(defn- rebuild-seq-node
+(defn- rebuild-inner-node
   [node coll children]
-  ((seq-node-ctor node coll) children))
+  ((inner-node-ctor node coll) children))
 
 (defn- tree-update
   [node sexprs]
@@ -128,7 +128,7 @@
                      (rest input-sexprs)]))
         [[] (n/children node) sexprs])
       first
-      (rebuild-seq-node node sexprs))
+      (rebuild-inner-node node sexprs))
 
     :else
     (n/coerce sexprs)))
