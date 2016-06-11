@@ -13,7 +13,13 @@
     (let [tree (p/parse-string-all source-code)]
       (mapcat next-fn (n/child-sexprs tree))))
   (transform* [_ source-code next-fn]
-    (let [s-expr (next-fn (edn/read-string source-code))]
-      (pr-str s-expr))))
+    (let [tree (p/parse-string-all source-code)]
+      (->> (n/children tree)
+        (map (fn [child]
+               (if (n/printable-only? child)
+                 child
+                 (n/coerce (next-fn (n/sexpr child))))))
+        (n/replace-children tree)
+        n/string))))
 
 (def SEXPRS (->SEXPRS-TYPE))
