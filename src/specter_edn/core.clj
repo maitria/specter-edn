@@ -1,5 +1,6 @@
 (ns specter-edn.core
-  (:require [clojure.edn :as edn]
+  (:require [clojure.data.priority-map :as pm]
+            [clojure.edn :as edn]
             [clojure.java.io :as io]
             [com.rpl.specter.protocols]
             [rewrite-clj
