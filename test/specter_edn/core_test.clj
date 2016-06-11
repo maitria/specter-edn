@@ -16,6 +16,7 @@
   (testing "can transform inside stringified s-expressions"
     (are [structure path replacement result] (= (setval path replacement structure)
                                                 result)
-      "[1]"        [SEXPRS FIRST] 2 "[2]"
-      "[1] [3]"    [SEXPRS FIRST] 2 "[2] [2]")))
+      "[1]"        [SEXPRS FIRST FIRST] 2 "[2]"
+      "[1] [3]"    [SEXPRS ALL FIRST] 2 "[2] [2]"
+      "42; hi!\n6" [SEXPRS LAST] 9 "42; hi!\n9")))
 
