@@ -86,6 +86,25 @@
                [0 1] :new
                [1 1] :match))))))
 
+(defn- seq-node-ctor
+  [node coll]
+  (cond
+    (= :forms (n/tag node)) n/forms-node
+    (set? coll)             n/set-node
+    (map? coll)             n/map-node
+    (vector? coll)          n/vector-node
+    (list? coll)            n/list-node
+    :else                   (throw (Exception.
+                                     (str "Not sure how to construct a node for "
+                                          (pr-str coll)
+                                          " (the original node had tag "
+                                          (n/tag node)
+                                          ")")))))
+
+(defn- rebuild-seq-node
+  [node coll children]
+  ((seq-node-ctor node coll) children))
+
 (defn- tree-update
   [node sexprs]
   {:pre [(not (n/printable-only? node))]}
@@ -109,7 +128,7 @@
                      (rest input-sexprs)]))
         [[] (n/children node) sexprs])
       first
-      (n/replace-children node))
+      (rebuild-seq-node node sexprs))
 
     :else
     (n/coerce sexprs)))
