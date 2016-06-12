@@ -107,7 +107,7 @@
 
 (defn- tree-update
   [node sexprs]
-  {:pre [(not (n/printable-only? node))]}
+;  {:pre [(not (n/printable-only? node))]}
   (cond
     (and (n/inner? node) (coll? sexprs))
     (->> (find-update-plan (vec (n/children node)) (vec sexprs))
@@ -138,7 +138,7 @@
   SEXPRS-TYPE
   (select* [_ source-code next-fn]
     (let [tree (p/parse-string-all source-code)]
-      (mapcat next-fn (n/child-sexprs tree))))
+      (next-fn (n/child-sexprs tree))))
   (transform* [_ source-code next-fn]
     (let [tree (p/parse-string-all source-code)
           sexprs (vec (next-fn (n/child-sexprs tree)))

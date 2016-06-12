@@ -5,6 +5,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :deploy-repositories [["releases" :clojars]]
   :dependencies [[org.clojure/clojure "1.8.0"]
+                 [org.clojure/core.unify "0.5.5"]
                  [com.rpl/specter "0.11.1"]
                  [aysylu/loom "0.6.0"]
                  [rewrite-clj "0.4.12"]])
