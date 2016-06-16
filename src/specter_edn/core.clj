@@ -96,12 +96,12 @@
     (map? coll)             n/map-node
     (vector? coll)          n/vector-node
     (list? coll)            n/list-node
-    :else                   (throw (Exception.
-                                     (str "Not sure how to construct a node for "
-                                          (pr-str coll)
-                                          " (the original node had tag "
-                                          (n/tag node)
-                                          ")")))))
+    :else
+    (throw (Exception.  (str "Not sure how to construct a node for "
+                             (pr-str coll)
+                             " (the original node had tag "
+                             (n/tag node)
+                             ")")))))
 
 (defn- rebuild-inner-node
   [node coll children]
