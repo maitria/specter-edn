@@ -1,5 +1,6 @@
 (ns specter-edn.core
-  (:require [clojure.set :as set]
+  (:require [clojure.core.match :refer [match]]
+            [clojure.set :as set]
             [com.rpl.specter.protocols]
             [loom
              [alg :as a]
@@ -89,6 +90,7 @@
 (defn- inner-node-ctor
   [node coll]
   (cond
+    (= :fn (n/tag node))    n/fn-node
     (= :forms (n/tag node)) n/forms-node
     (set? coll)             n/set-node
     (map? coll)             n/map-node
@@ -107,31 +109,36 @@
 
 (defn- tree-update
   [node sexprs]
-;  {:pre [(not (n/printable-only? node))]}
-  (cond
-    (and (n/inner? node) (coll? sexprs))
-    (->> (find-update-plan (vec (n/children node)) (vec sexprs))
-      (reduce
-        (fn [[output-nodes input-nodes input-sexprs] step]
-          (case step
-            :remove [output-nodes
-                     (rest input-nodes)
-                     input-sexprs]
-            :keep   [(conj output-nodes (first input-nodes))
-                     (rest input-nodes)
-                     input-sexprs]
-            :new    [(conj output-nodes (n/coerce (first input-sexprs)))
-                     input-nodes
-                     (rest input-sexprs)]
-            :match  [(conj output-nodes (tree-update (first input-nodes) (first input-sexprs)))
-                     (rest input-nodes)
-                     (rest input-sexprs)]))
-        [[] (n/children node) sexprs])
-      first
-      (rebuild-inner-node node sexprs))
+  {:pre [(not (n/printable-only? node))]}
+  (match [(n/tag node) sexprs]
+    [:fn (['fn* args body] :seq)]
+    (tree-update node body)
 
     :else
-    (n/coerce sexprs)))
+    (cond
+      (and (n/inner? node) (coll? sexprs))
+      (->> (find-update-plan (vec (n/children node)) (vec sexprs))
+        (reduce
+          (fn [[output-nodes input-nodes input-sexprs] step]
+            (case step
+              :remove [output-nodes
+                       (rest input-nodes)
+                       input-sexprs]
+              :keep   [(conj output-nodes (first input-nodes))
+                       (rest input-nodes)
+                       input-sexprs]
+              :new    [(conj output-nodes (n/coerce (first input-sexprs)))
+                       input-nodes
+                       (rest input-sexprs)]
+              :match  [(conj output-nodes (tree-update (first input-nodes) (first input-sexprs)))
+                       (rest input-nodes)
+                       (rest input-sexprs)]))
+          [[] (n/children node) sexprs])
+        first
+        (rebuild-inner-node node sexprs))
+
+      :else
+      (n/coerce sexprs))))
 
 (deftype SEXPRS-TYPE [])
 (extend-protocol com.rpl.specter.protocols/Navigator
