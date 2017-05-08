@@ -1,7 +1,7 @@
 (ns specter-edn.core
   (:require [clojure.core.match :refer [match]]
             [clojure.set :as set]
-            [com.rpl.specter.protocols]
+            [com.rpl.specter :as specter :refer [defnav]]
             [loom
              [alg :as a]
              [graph :as g]]
@@ -140,9 +140,7 @@
       :else
       (n/coerce sexprs))))
 
-(deftype SEXPRS-TYPE [])
-(extend-protocol com.rpl.specter.protocols/Navigator
-  SEXPRS-TYPE
+(defnav SEXPRS []
   (select* [_ source-code next-fn]
     (let [tree (p/parse-string-all source-code)]
       (next-fn (n/child-sexprs tree))))
@@ -151,5 +149,3 @@
           sexprs (vec (next-fn (n/child-sexprs tree)))
           new-tree (tree-update tree sexprs)]
       (n/string new-tree))))
-
-(def SEXPRS (->SEXPRS-TYPE))
