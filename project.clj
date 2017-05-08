@@ -1,4 +1,4 @@
-(defproject com.maitria/specter-edn "0.1.1"
+(defproject com.maitria/specter-edn "0.1.2-SNAPSHOT"
   :description "Specter paths for working with formatted EDN and Clojure code"
   :url "http://github.com/eraserhd/specter-edn"
   :license {:name "Eclipse Public License"
