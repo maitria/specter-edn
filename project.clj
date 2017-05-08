@@ -6,6 +6,6 @@
   :deploy-repositories [["releases" :clojars]]
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/core.match "0.3.0-alpha4"]
-                 [com.rpl/specter "0.11.1"]
-                 [aysylu/loom "0.6.0"]
-                 [rewrite-clj "0.4.12"]])
+                 [com.rpl/specter "1.0.1"]
+                 [aysylu/loom "1.0.0"]
+                 [rewrite-clj "0.6.0"]])

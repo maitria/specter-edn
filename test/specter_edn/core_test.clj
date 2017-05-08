@@ -1,7 +1,6 @@
 (ns specter-edn.core-test
   (:require [clojure.test :refer :all]
             [com.rpl.specter :refer :all]
-            [com.rpl.specter.macros :refer :all]
             [specter-edn.core :refer :all]))
 
 (deftest SEXPRS-test
