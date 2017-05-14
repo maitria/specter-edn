@@ -30,11 +30,9 @@
     (and (n/inner? node) (coll? sexpr))
     (let [A (->> (n/child-sexprs node)
               flatten
-              sort
               (into #{}))
           B (->> sexpr
               flatten
-              sort
               (into #{}))]
       (- 1.0 (jaccard-index A B)))
 
