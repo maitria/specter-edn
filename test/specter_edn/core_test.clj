@@ -22,23 +22,17 @@
       "[1]"        [SEXPRS]             '[(1)]         "(1)"
       "#(conj %)"  [SEXPRS FIRST LAST]  '(dissoc %)    "#(dissoc %)"))
 
-  (testing "can transform inside stringified s-expressions"
-    (are [structure path f result] (= (transform path f structure)
-                                                result)
-      "[1]"        [SEXPRS FIRST FIRST] identity       "[1]"
-      "[1] [3]"    [SEXPRS ALL FIRST]   identity       "[1] [3]"
-      "42; hi!\n6" [SEXPRS LAST]        identity       "42; hi!\n6"
-      "42; hi!\n6" [SEXPRS FIRST]       identity       "42; hi!\n6"
-      "[1]"        [SEXPRS]             identity       "[1]"
+  (testing "identity transforms preserve formatting"
+    (are [structure path] (= (transform path identity structure) structure)
+      "[1]"        [SEXPRS FIRST FIRST]
+      "[1] [3]"    [SEXPRS ALL FIRST]
+      "42; hi!\n6" [SEXPRS LAST]
+      "42; hi!\n6" [SEXPRS FIRST]
+      "[1]"        [SEXPRS]
       "(ns specter-edn.core-test
   (:require [clojure.test :refer :all]
             [com.rpl.specter :refer :all]
             [specter-edn.core :refer :all]))"
-                   [SEXPRS]             identity "(ns specter-edn.core-test
-  (:require [clojure.test :refer :all]
-            [com.rpl.specter :refer :all]
-            [specter-edn.core :refer :all]))"
+                   [SEXPRS])))
       ;; FIXME: this sample doesn't pass
-      ; "#(conj %)"  [SEXPRS]             identity       "#(conj %)"
-      )))
-
+      ;"#(conj %)"  [SEXPRS])))
