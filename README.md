@@ -1,8 +1,10 @@
 # specter-edn
 
+https://github.com/maitria/specter-edn/
+
 Specter paths for working with formatted EDN and Cloure code.
 
-There is one specter path: `SEXPR`.  This navigates to a sequence of
+There is one specter path: `SEXPRS`.  This navigates to a sequence of
 s-expressions parsed from a string.
 
 For the `transform` case, `specter-edn` preserves whitespace and comments using
@@ -14,12 +16,12 @@ of the parse tree.
 ```clojure
 (use 'com.rpl.specter)
 (use 'com.rpl.specter.macros)
-(use 'com.maitria.specter-edn)
+(use 'specter-edn.core)
 
-(select [SEXPR FIRST LAST] "[42 26 77]")
+(select [SEXPRS FIRST LAST] "[42 26 77]")
 ;=> 77
 
-(setval [SEXPR FIRST FIRST] 99 "[42 ; Hi mom!\n6]")
+(setval [SEXPRS FIRST FIRST] 99 "[42 ; Hi mom!\n6]")
 ;=> "[99 ; Hi mom!\n6]"
 ```
 
@@ -29,7 +31,7 @@ of the parse tree.
 
 ## License
 
-Copyright © 2016 FIXME
+Copyright © 2016, 2017 Jason M. Felice
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
