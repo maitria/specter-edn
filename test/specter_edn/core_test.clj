@@ -33,6 +33,13 @@
   (:require [clojure.test :refer :all]
             [com.rpl.specter :refer :all]
             [specter-edn.core :refer :all]))"
-                   [SEXPRS])))
-      ;; FIXME: this sample doesn't pass
-      ;"#(conj %)"  [SEXPRS])))
+                   [SEXPRS]))
+    ;; FIXME: this sample doesn't pass
+    ;"#(conj %)"  [SEXPRS])))
+
+  (testing "constantly transforms preserve of the new structure"
+      (are [structure path result] (= result (transform path (constantly '[a b c d]) structure))
+        "[1]"        [SEXPRS FIRST FIRST] "[[a b c d]]"
+        "[1]"        [SEXPRS] "a b c d"
+        "[1] [3]"    [SEXPRS ALL FIRST] "[[a b c d]] [[a b c d]]")))
+
