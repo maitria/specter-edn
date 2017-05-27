@@ -60,11 +60,11 @@
                              1))
 
                          [0 1]
-                         (if (get sexprs j)
+                         (when (< j (count sexprs))
                            1)
 
                          [1 1]
-                         (if (and (get nodes i) (get sexprs j))
+                         (when (and (< i (count nodes)) (< j (count sexprs)))
                            (change-weight (get nodes i) (get sexprs j))))]
           :when weight]
       [[i j] [ii jj] weight])))
@@ -169,4 +169,3 @@
           sexprs (vec (next-fn (n/child-sexprs tree)))
           new-tree (tree-update tree sexprs)]
       (n/string new-tree))))
-

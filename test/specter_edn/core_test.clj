@@ -29,6 +29,8 @@
       "42; hi!\n6" [SEXPRS LAST]
       "42; hi!\n6" [SEXPRS FIRST]
       "[1]"        [SEXPRS]
+      "[1 nil]"    [SEXPRS]
+      "nil"        [SEXPRS]
       "(ns specter-edn.core-test
   (:require [clojure.test :refer :all]
             [com.rpl.specter :refer :all]
