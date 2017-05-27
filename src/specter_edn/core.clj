@@ -127,7 +127,7 @@
 
     :else
     (cond
-      (and (n/inner? node) (coll? sexprs))
+      (and (n/inner? node) (sequential? sexprs))
       (->> (find-update-plan (vec (n/children node)) (vec sexprs))
         (reduce
           (fn [[output-nodes input-nodes input-sexprs] step]
