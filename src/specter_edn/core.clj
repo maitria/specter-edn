@@ -139,6 +139,18 @@
            (walk/postwalk-replace replace-symbols form)))
        last))
 
+(defn map-sort
+  [node map]
+  (let [node-index (->> (n/children node)
+                           (remove n/printable-only?)
+                           (partition 2)
+                           (mapv first)
+                           (mapv n/sexpr)
+                           (map-indexed (fn [idx k] [k idx]))
+                           (into {}))
+        sort-fn (fn [[k _]] (get node-index k 9999999999))]
+    (->> (sort-by sort-fn map) (apply concat) vec)))
+
 (defn- tree-update
   [node sexprs]
   (if (and (not (n/printable-only? node)) (= (type (n/sexpr node)) (type sexprs)) (= (n/sexpr node) sexprs))
@@ -167,6 +179,27 @@
                             (rest input-nodes)
                             (rest input-sexprs)]))
                [[] (n/children node) sexprs])
+             first
+             (rebuild-inner-node node sexprs))
+
+        (and (= :map (n/tag node)) (map? sexprs))
+        (->> (find-update-plan (vec (n/children node)) (map-sort node sexprs))
+             (reduce
+               (fn [[output-nodes input-nodes input-sexprs] step]
+                 (case step
+                   :remove [output-nodes
+                            (rest input-nodes)
+                            input-sexprs]
+                   :keep   [(append-node output-nodes (first input-nodes))
+                            (rest input-nodes)
+                            input-sexprs]
+                   :new    [(append-node output-nodes (n/coerce (first input-sexprs)))
+                            input-nodes
+                            (rest input-sexprs)]
+                   :match  [(append-node output-nodes (tree-update (first input-nodes) (first input-sexprs)))
+                            (rest input-nodes)
+                            (rest input-sexprs)]))
+               [[] (n/children node) (map-sort node sexprs)])
              first
              (rebuild-inner-node node sexprs))
 

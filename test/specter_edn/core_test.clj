@@ -32,6 +32,7 @@
       "{:a 1}"        [SEXPRS]
       "[1 nil]"       [SEXPRS]
       "{:a 1 :b 2}"   [SEXPRS]
+      "{:a #(identity %) :b 2}" [SEXPRS]
       "{:a 1
          :b 2}    "   [SEXPRS]
       "#{:a :b}"      [SEXPRS]
