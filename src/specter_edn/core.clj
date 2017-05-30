@@ -7,9 +7,7 @@
              [graph :as g]]
             [rewrite-clj
              [node :as n]
-             [parser :as p]]
-            [rewrite-clj.node.comment :as c]
-            [rewrite-clj.node.whitespace :as w]))
+             [parser :as p]]))
 
 (defn- jaccard-index
   "Compute the Jaccard similarity coefficient for two sets.
@@ -108,16 +106,23 @@
   [node coll children]
   ((inner-node-ctor node coll) children))
 
-(defn- has-whitespace?
+(defn- needs-whitespace?
   [output-nodes new-output]
-  (or (empty? output-nodes)
-      (w/whitespace? (last output-nodes))
-      (c/comment? (last output-nodes))
-      (w/whitespace? new-output)
-      (c/comment? new-output)))
+  (not
+    (or (empty? output-nodes)
+        (n/whitespace? (last output-nodes))
+        (n/comment? (last output-nodes))
+        (n/whitespace? new-output)
+        (n/comment? new-output))))
 
 (def single-space
-  (w/whitespace-node " "))
+  (n/whitespace-node " "))
+
+(defn append-node
+  [output-nodes new-output]
+  (if (needs-whitespace? output-nodes new-output)
+    (conj output-nodes single-space new-output)
+    (conj output-nodes new-output)))
 
 (defn- tree-update
   [node sexprs]
@@ -135,22 +140,13 @@
               :remove [output-nodes
                        (rest input-nodes)
                        input-sexprs]
-              :keep   [(let [new-output (first input-nodes)]
-                         (if (has-whitespace? output-nodes new-output)
-                           (conj output-nodes new-output)
-                           (conj output-nodes single-space new-output)))
+              :keep   [(append-node output-nodes (first input-nodes))
                        (rest input-nodes)
                        input-sexprs]
-              :new    [(let [new-output (n/coerce (first input-sexprs))]
-                         (if (has-whitespace? output-nodes new-output)
-                           (conj output-nodes new-output)
-                           (conj output-nodes single-space new-output)))
+              :new    [(append-node output-nodes (n/coerce (first input-sexprs)))
                        input-nodes
                        (rest input-sexprs)]
-              :match  [(let [new-output (tree-update (first input-nodes) (first input-sexprs))]
-                         (if (has-whitespace? output-nodes new-output)
-                           (conj output-nodes new-output)
-                           (conj output-nodes single-space new-output)))
+              :match  [(append-node output-nodes (tree-update (first input-nodes) (first input-sexprs)))
                        (rest input-nodes)
                        (rest input-sexprs)]))
           [[] (n/children node) sexprs])
