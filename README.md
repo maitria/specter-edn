@@ -2,7 +2,7 @@
 
 https://github.com/maitria/specter-edn/
 
-Specter paths for working with formatted EDN and Cloure code.
+Format-preserving Specter path for EDN and Cloure code.
 
 There is one specter path: `SEXPRS`.  This navigates to a sequence of
 s-expressions parsed from a string.
