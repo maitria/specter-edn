@@ -29,6 +29,11 @@ of the parse tree.
 
 * Use clj-format to format new code which isn't matched up with old code.
 
+## Contributors
+
+- Jason Felice
+- Marcelo Nomoto
+
 ## License
 
 Copyright © 2016, 2017 Jason M. Felice
