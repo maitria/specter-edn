@@ -126,35 +126,37 @@
 
 (defn- tree-update
   [node sexprs]
-  (match [(n/tag node) sexprs]
-    [:fn (['fn* args body] :seq)]
-    (tree-update node body)
-
-    :else
-    (cond
-      (and (n/inner? node) (sequential? sexprs))
-      (->> (find-update-plan (vec (n/children node)) (vec sexprs))
-        (reduce
-          (fn [[output-nodes input-nodes input-sexprs] step]
-            (case step
-              :remove [output-nodes
-                       (rest input-nodes)
-                       input-sexprs]
-              :keep   [(append-node output-nodes (first input-nodes))
-                       (rest input-nodes)
-                       input-sexprs]
-              :new    [(append-node output-nodes (n/coerce (first input-sexprs)))
-                       input-nodes
-                       (rest input-sexprs)]
-              :match  [(append-node output-nodes (tree-update (first input-nodes) (first input-sexprs)))
-                       (rest input-nodes)
-                       (rest input-sexprs)]))
-          [[] (n/children node) sexprs])
-        first
-        (rebuild-inner-node node sexprs))
+  (if (and (= (type (n/sexpr node)) (type sexprs)) (= (n/sexpr node) sexprs))
+    node
+    (match [(n/tag node) sexprs]
+      [:fn (['fn* args body] :seq)]
+      (tree-update node body)
 
       :else
-      (n/coerce sexprs))))
+      (cond
+        (and (n/inner? node) (sequential? sexprs))
+        (->> (find-update-plan (vec (n/children node)) (vec sexprs))
+             (reduce
+               (fn [[output-nodes input-nodes input-sexprs] step]
+                 (case step
+                   :remove [output-nodes
+                            (rest input-nodes)
+                            input-sexprs]
+                   :keep   [(append-node output-nodes (first input-nodes))
+                            (rest input-nodes)
+                            input-sexprs]
+                   :new    [(append-node output-nodes (n/coerce (first input-sexprs)))
+                            input-nodes
+                            (rest input-sexprs)]
+                   :match  [(append-node output-nodes (tree-update (first input-nodes) (first input-sexprs)))
+                            (rest input-nodes)
+                            (rest input-sexprs)]))
+               [[] (n/children node) sexprs])
+             first
+             (rebuild-inner-node node sexprs))
+
+        :else
+        (n/coerce sexprs)))))
 
 (defnav SEXPRS []
   (select* [_ source-code next-fn]
