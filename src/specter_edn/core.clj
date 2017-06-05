@@ -126,7 +126,7 @@
 
 (defn- tree-update
   [node sexprs]
-  (if (and (= (type (n/sexpr node)) (type sexprs)) (= (n/sexpr node) sexprs))
+  (if (and (not (n/printable-only? node)) (= (type (n/sexpr node)) (type sexprs)) (= (n/sexpr node) sexprs))
     node
     (match [(n/tag node) sexprs]
       [:fn (['fn* args body] :seq)]
