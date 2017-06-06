@@ -104,7 +104,9 @@
 
 (defn- rebuild-inner-node
   [node coll children]
-  ((inner-node-ctor node coll) children))
+  (if (= :deref (n/tag node))
+    (n/deref-node (drop-while n/whitespace? (rest children)))
+    ((inner-node-ctor node coll) children)))
 
 (defn- needs-whitespace?
   [output-nodes new-output]
