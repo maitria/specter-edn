@@ -1,10 +1,12 @@
 (ns specter-edn.core
   (:require [clojure.core.match :refer [match]]
+            [clojure.walk :as walk]
             [clojure.set :as set]
             [com.rpl.specter :as specter :refer [defnav]]
             [loom
              [alg :as a]
              [graph :as g]]
+            [rewrite-clj.node.whitespace :as w]
             [rewrite-clj
              [node :as n]
              [parser :as p]]))
@@ -126,13 +128,24 @@
     (conj output-nodes single-space new-output)
     (conj output-nodes new-output)))
 
+(defn rebuild-reader-fn
+  [form]
+  (->> (if (<= (count (second form)) 1)
+         (let [replace-symbols (->> (map vector (second form) ['%])
+                                    (into {}))]
+           (walk/postwalk-replace replace-symbols form))
+         (let [replace-symbols (->> (map vector (second form) (map (fn [i] (symbol (str "%" i))) (range 1 (inc (count (second form))))))
+                                    (into {}))]
+           (walk/postwalk-replace replace-symbols form)))
+       last))
+
 (defn- tree-update
   [node sexprs]
   (if (and (not (n/printable-only? node)) (= (type (n/sexpr node)) (type sexprs)) (= (n/sexpr node) sexprs))
     node
     (match [(n/tag node) sexprs]
       [:fn (['fn* args body] :seq)]
-      (tree-update node body)
+      (tree-update node (rebuild-reader-fn sexprs))
 
       :else
       (cond
