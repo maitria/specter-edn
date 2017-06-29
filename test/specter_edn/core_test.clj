@@ -75,7 +75,9 @@
             [com.rpl.specter :refer :all]
             [specter-edn.core :refer :all]))"
                    [SEXPRS]
-      "(fn [x] (inc x))" [SEXPRS]))
+      "(fn [x] (inc x))" [SEXPRS]
+      "^:x [1 #(conj %1 %2)]" [SEXPRS]
+      "^{:x 1 :y 2} [1 #(conj %1 %2)]" [SEXPRS]))
     ;; FIXME: those samples don't pass
       ; "\r" [SEXPRS]
       ; #"pattern"        [SEXPRS]

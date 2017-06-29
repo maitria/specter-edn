@@ -153,12 +153,17 @@
 
 (defn- tree-update
   [node sexprs]
-  (if (and (not (n/printable-only? node)) (= (type (n/sexpr node)) (type sexprs)) (= (n/sexpr node) sexprs))
+  (if (and (not (n/printable-only? node))
+           (= (type (n/sexpr node)) (type sexprs))
+           (= (n/sexpr node) sexprs))
     node
     (match [(n/tag node) sexprs]
       [:fn (['fn* args body] :seq)]
       (tree-update node (rebuild-reader-fn sexprs))
 
+      [:meta _]  (if (= (meta (n/sexpr node)) (meta sexprs))
+                   (n/meta-node (first (n/children node)) (tree-update (last (n/children node)) sexprs))
+                   (tree-update (last (n/children node)) sexprs))
       :else
       (cond
         (and (n/inner? node) (sequential? sexprs))
