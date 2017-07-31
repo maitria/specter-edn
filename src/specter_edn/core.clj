@@ -54,7 +54,7 @@
                 jj (+ j jd)
                 weight (case [id jd]
                          [1 0]
-                         (if-let [n (get nodes i)]
+                         (when-let [n (get nodes i)]
                            (if (n/printable-only? n)
                              0
                              1))
@@ -89,20 +89,20 @@
 
 (defn- inner-node-ctor
   [node coll]
-  (cond
-    (= :fn (n/tag node))    n/fn-node
-    (= :forms (n/tag node)) n/forms-node
-    (= :list (n/tag node))  n/list-node
-    (set? coll)             n/set-node
-    (map? coll)             n/map-node
-    (vector? coll)          n/vector-node
-    (list? coll)            n/list-node
-    :else
-    (throw (Exception.  (str "Not sure how to construct a node for "
-                             (pr-str coll)
-                             " (the original node had tag "
-                             (n/tag node)
-                             ")")))))
+  (case (n/tag node)
+    :fn       n/fn-node
+    :forms    n/forms-node
+    :list     n/list-node
+    (condp #(%1 %2) coll
+      set?    n/set-node
+      map?    n/map-node
+      vector? n/vector-node
+      list?   n/list-node
+      (throw (Exception.
+               (format
+                 "Not sure how to construct a node for %s (the original node had tag %s)"
+                 (pr-str coll)
+                 (n/tag node)))))))
 
 (defn- rebuild-inner-node
   [node coll children]
@@ -129,27 +129,38 @@
     (conj output-nodes new-output)))
 
 (defn rebuild-reader-fn
-  [form]
-  (->> (if (<= (count (second form)) 1)
-         (let [replace-symbols (->> (map vector (second form) ['%])
-                                    (into {}))]
-           (walk/postwalk-replace replace-symbols form))
-         (let [replace-symbols (->> (map vector (second form) (map (fn [i] (symbol (str "%" i))) (range 1 (inc (count (second form))))))
-                                    (into {}))]
-           (walk/postwalk-replace replace-symbols form)))
-       last))
+  [[_ snd :as form]]
+  (let [syms (if (<= (count snd) 1)
+               ['%]
+               (map (fn [i] (symbol (str "%" i))) (range 1 (inc (count snd)))))
+        replace-symbols (zipmap snd syms)]
+    (last (walk/postwalk-replace replace-symbols form))))
 
 (defn map-sort
-  [node map]
+  [node m]
   (let [node-index (->> (n/children node)
-                           (remove n/printable-only?)
-                           (partition 2)
-                           (mapv first)
-                           (mapv n/sexpr)
-                           (map-indexed (fn [idx k] [k idx]))
-                           (into {}))
-        sort-fn (fn [[k _]] (get node-index k 9999999999))]
-    (->> (sort-by sort-fn map) (apply concat) vec)))
+                        (remove n/printable-only?)
+                        (take-nth 2)
+                        (map n/sexpr)
+                        (#(zipmap % (range))))]
+    (->> m (sort-by #(get node-index (key %) 9999999999)) (reduce into []))))
+
+(declare tree-update)
+
+(defn- process-step [[output-nodes input-nodes input-sexprs] step]
+  (case step
+    :remove [output-nodes
+             (rest input-nodes)
+             input-sexprs]
+    :keep   [(append-node output-nodes (first input-nodes))
+             (rest input-nodes)
+             input-sexprs]
+    :new    [(append-node output-nodes (n/coerce (first input-sexprs)))
+             input-nodes
+             (rest input-sexprs)]
+    :match  [(append-node output-nodes (tree-update (first input-nodes) (first input-sexprs)))
+             (rest input-nodes)
+             (rest input-sexprs)]))
 
 (defn- tree-update
   [node sexprs]
@@ -161,50 +172,21 @@
       [:fn (['fn* args body] :seq)]
       (tree-update node (rebuild-reader-fn sexprs))
 
-      [:meta _]  (if (= (meta (n/sexpr node)) (meta sexprs))
-                   (n/meta-node (first (n/children node)) (tree-update (last (n/children node)) sexprs))
-                   (tree-update (last (n/children node)) sexprs))
+      [:meta _] (let [data (tree-update (last (n/children node)) sexprs)]
+                  (if (= (meta (n/sexpr node)) (meta sexprs))
+                    (n/meta-node (first (n/children node)) data)
+                    data))
       :else
       (cond
         (and (n/inner? node) (sequential? sexprs))
         (->> (find-update-plan (vec (n/children node)) (vec sexprs))
-             (reduce
-               (fn [[output-nodes input-nodes input-sexprs] step]
-                 (case step
-                   :remove [output-nodes
-                            (rest input-nodes)
-                            input-sexprs]
-                   :keep   [(append-node output-nodes (first input-nodes))
-                            (rest input-nodes)
-                            input-sexprs]
-                   :new    [(append-node output-nodes (n/coerce (first input-sexprs)))
-                            input-nodes
-                            (rest input-sexprs)]
-                   :match  [(append-node output-nodes (tree-update (first input-nodes) (first input-sexprs)))
-                            (rest input-nodes)
-                            (rest input-sexprs)]))
-               [[] (n/children node) sexprs])
+             (reduce process-step [[] (n/children node) sexprs])
              first
              (rebuild-inner-node node sexprs))
 
         (and (= :map (n/tag node)) (map? sexprs))
         (->> (find-update-plan (vec (n/children node)) (map-sort node sexprs))
-             (reduce
-               (fn [[output-nodes input-nodes input-sexprs] step]
-                 (case step
-                   :remove [output-nodes
-                            (rest input-nodes)
-                            input-sexprs]
-                   :keep   [(append-node output-nodes (first input-nodes))
-                            (rest input-nodes)
-                            input-sexprs]
-                   :new    [(append-node output-nodes (n/coerce (first input-sexprs)))
-                            input-nodes
-                            (rest input-sexprs)]
-                   :match  [(append-node output-nodes (tree-update (first input-nodes) (first input-sexprs)))
-                            (rest input-nodes)
-                            (rest input-sexprs)]))
-               [[] (n/children node) (map-sort node sexprs)])
+             (reduce process-step [[] (n/children node) (map-sort node sexprs)])
              first
              (rebuild-inner-node node sexprs))
 
